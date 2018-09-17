@@ -17,7 +17,7 @@ class UserLogged(View):
         self.request.headers.getheader('Auth')
         users = SessionManger.session().query(User).all()
         context = {'users': users}
-        render = self.render({context})
+        render = self.render(context)
         return Response(render, status=200)
 
 
