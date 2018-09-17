@@ -1,5 +1,7 @@
 Instrucciones
 
+instalar las dependencias del requirements.txt
+
 Ejecutar server.py
 
 ingresar a las urls
