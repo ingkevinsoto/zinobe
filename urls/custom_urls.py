@@ -1,7 +1,8 @@
-from views.custom_views import UserListView, UserLogin, ManageUser
+from views.custom_views import UserLogged, UserLogin, ManageUser, UserSearch
 
 url_paths = {
-    '/list-user/': UserListView,
+    '/user-logged/': UserLogged,
     '/user-login/': UserLogin,
     '/manage-user/': ManageUser,
+    '/user-search/': UserSearch,
 }

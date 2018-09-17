@@ -3,28 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+
+    <script language="JavaScript" type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#search-content').on('click', '#search-button', function () {
+                var param = $('#search').val();
+                    console.log(param);
+
+                $.get('/user-search/', {param: param}, function () {
+                    console.log("aqui");
+                     //$('#users').html(html);
+                });
+
+            });
+
+
+        });
+    </script>
+
 </head>
 <body>
-<p>Username {{user_log.username}}</p>
+<h1>User Logged</h1>
+<div id="search-content">
+        <input type="text" name="search" id="search" placeholder="search username, email">
+        <button type="button" id="search-button">Search</button>
 
+</div>
+<br>
+<div>
+    <table>
+        <thead>
+        <th>Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Country</th>
+        </thead>
+        <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{user.name}}</td>
+            <td>{{user.username}}</td>
+            <td>{{user.email}}</td>
+            <td>{{user.country}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-<table>
-    <thead>
-    <th>Name</th>
-    <th>Username</th>
-    <th>Email</th>
-    <th>Country</th>
-    </thead>
-    <tbody>
-    {% for user in users %}
-    <tr>
-        <td>{{user.name}}</td>
-        <td>{{user.username}}</td>
-        <td>{{user.email}}</td>
-        <td>{{user.country}}</td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
 </body>
 </html>

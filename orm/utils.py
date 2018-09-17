@@ -19,7 +19,7 @@ class SessionManger(object):
     @staticmethod
     def engine():
         if not SessionManger._engine:
-            SessionManger._engine = create_engine('sqlite:///foo.db', echo=True)
+            SessionManger._engine = create_engine('sqlite:///zinobe.db', echo=True)
         return SessionManger._engine
 
     @staticmethod

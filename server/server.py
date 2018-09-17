@@ -2,7 +2,10 @@
 import cgi
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from urlparse import urlparse, parse_qs
+from Cookie import SimpleCookie
+
 from urls.utils import resolved_url
+from views.generic_views import Response
 
 HOST_NAME = "localhost"
 HOST_PORT = 8001
@@ -10,29 +13,35 @@ HOST_PORT = 8001
 
 class Server(BaseHTTPRequestHandler):
 
-    def _set_headers(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+    def _set_headers(self, headers):
+        if not headers.get('Content-type'):
+            self.send_header('Content-type', 'text/html')
+        for key, value in headers.items():
+            self.send_header(key, value)
         self.end_headers()
 
     def do_GET(self):
-        self._set_headers()
-        if self.headers.getheader('Location'):
-            self.path = self.headers.getheader('Location')
+        # cookie = SimpleCookie(self.headers['cookie']) if self.headers.get('cookie') else SimpleCookie()
         view = resolved_url(self.path)
         url_parse = urlparse(self.path)
         GET = parse_qs(url_parse.query)
-        render = 'page not found'
-        status_code = 404
+        response = Response('page not found', status=404)
         if view:
-            render, status_code = view(self, GET=GET).get()
-        self.send_response(status_code)
-        self.wfile.write(render)
+            response = view(self, GET=GET).get()
+        if not view and '?' in self.path:
+            view = resolved_url(url_parse.path)
+            response = view(self, GET=GET).get()
+            self.send_response(response.status)
+            self._set_headers(response.headers)
+            self.wfile.write(response.response)
+
+        self.send_response(response.status)
+        self._set_headers(response.headers)
+        self.wfile.write(response.response)
 
     def do_POST(self):
-        self._set_headers()
-        if self.headers.getheader('Location'):
-            self.path = self.headers.getheader('Location')
+        # cookie = SimpleCookie(self.headers['cookie']) if self.headers.get('cookie') else SimpleCookie()
+        # cookie['username'] = 'hjkdahgsjahj'
         view = resolved_url(self.path)
         url_parse = urlparse(self.path)
         ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
@@ -46,12 +55,13 @@ class Server(BaseHTTPRequestHandler):
         GET = parse_qs(url_parse.query)
         POST = postvars
 
-        render = 'page not found'
-        status_code = 404
+        response = Response('page not found', status=404)
         if view:
-            render, status_code = view(self, GET=GET, POST=POST).post()
-        self.send_response(status_code)
-        self.wfile.write(render)
+            response = view(self, GET=GET, POST=POST).post()
+        self.send_response(response.status)
+        # self.send_header('Set-Cookie', cookie['username'].OutputString() + 'max-age=3600')
+        self._set_headers(response.headers)
+        self.wfile.write(response.response)
 
 
 def run_server():

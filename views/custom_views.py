@@ -1,39 +1,43 @@
+import json
+from httplib import HTTPResponse
+
+from sqlalchemy.sql.elements import or_
+
 from models.generic_models import User
 from orm.utils import SessionManger
-from views.generic_views import View
+from views.generic_views import View, Response
 from render.utils import render_to_string
 
 
-class UserListView(View):
+class UserLogged(View):
+
+    template = '../templates/user_logged.html'
 
     def get(self):
-        users = [
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-            {'name': 'kevin', 'username':'eldelflow', 'last_name':'soto'},
-        ]
+        self.request.headers.getheader('Auth')
+        users = SessionManger.session().query(User).all()
         context = {'users': users}
-        if self.request.headers.getheader('Auth') and self.request.headers.getheader('Auth') == 'True':
-            pass
-        render = render_to_string('../templates/list_user.html', context)
-        return render, 200
+        render = self.render({context})
+        return Response(render, status=200)
+
+
+class UserSearch(View):
+
+    def get(self):
+        search_param = self.GET.get('param')[0]
+        users = SessionManger.session().query(User).filter(or_(User.name == search_param, User.email == search_param))
+        render = render_to_string('../templates/list_users.html', {'users': users})
+        headers = {'Location': '/user-logged/'}
+        return Response(render, status=301, headers=headers, data=search_param)
 
 
 class UserLogin(View):
 
+    template = '../templates/login_user.html'
+
     def get(self):
-        render = render_to_string('../templates/login_user.html', {})
-        return render, 200
+        render = self.render({})
+        return Response(render, status=200)
 
     def post(self):
         query = {
@@ -42,24 +46,18 @@ class UserLogin(View):
         }
         user = SessionManger.session().query(User).filter_by(**query).first()
         if not user:
-            render = render_to_string('../templates/login_user.html', {})
-            return render, 200
-        self.request.send_header('Auth', user.username)
-        users = SessionManger.session().query(User).all()
-        context = {
-            'users': users,
-            'user_log': user
-        }
-        self.request.send_header('Location', '/list-user/')
-        render = render_to_string('../templates/user_logged.html', context)
-        return render, 200
+            render = self.render({})
+            return Response(render, status=200)
+        headers = {'Location': '/user-logged/', 'Auth': user.username}
+        return Response('', status=301, headers=headers)
 
 
 class ManageUser(View):
+    template = '../templates/add_user.html'
 
     def get(self):
-        render = render_to_string('../templates/add_user.html', {})
-        return render, 200
+        render = self.render({})
+        return Response(render, status=200)
 
     def post(self):
 
@@ -70,21 +68,9 @@ class ManageUser(View):
             country=self.POST.get('country')[0],
             password=self.POST.get('password')[0]
         )
-        user2 = User(
-            username=self.POST.get('username')[0],
-            name=self.POST.get('name')[0],
-            email=self.POST.get('email')[0],
-            country=self.POST.get('country')[0],
-            password=self.POST.get('password')[0]
-        )
+
         SessionManger.session().add(user)
-        SessionManger.session().add(user2)
         SessionManger.commit()
 
-        # our_user = get_session().query(User) # .filter_by(name='kevin').first()
-        our_user = SessionManger.session().query(User).filter_by(name='kevin').first()
-        print('#'*10)
-        print(our_user)
-        print('#'*10)
-        render = render_to_string('../templates/user_logged.html', {})
-        return render, 200
+        render = render_to_string('../templates/user_registred.html', {'user': user})
+        return Response(render, status=301)
